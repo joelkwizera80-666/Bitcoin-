@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bitcoin- Toolkit</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #151b30;
+      --accent: #f7931a;
+      --text: #e8ecf5;
+      --muted: #93a0bd;
+      --ok: #35d07f;
+      --bad: #ff5c6c;
+      --border: #26304d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 50% -10%, #1a2340 0, var(--bg) 60%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      text-align: center;
+      padding: 40px 16px 8px;
+    }
+    .logo {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 700; box-shadow: 0 8px 24px rgba(247,147,26,.35);
+    }
+    h1 { margin: 12px 0 4px; font-size: 28px; letter-spacing: .5px; }
+    .subtitle { color: var(--muted); margin: 0 0 8px; }
+    .price {
+      font-size: 34px; font-weight: 700; color: var(--accent); margin-top: 6px;
+    }
+    .price small { color: var(--muted); font-size: 13px; font-weight: 500; }
+    main {
+      max-width: 900px; margin: 0 auto; padding: 24px 16px 60px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px;
+    }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .card h2 { margin: 0 0 14px; font-size: 17px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+    input {
+      width: 100%; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border);
+      background: #0e1424; color: var(--text); font-size: 14px;
+    }
+    button {
+      margin-top: 14px; width: 100%; padding: 11px 12px; border: none; border-radius: 9px;
+      background: var(--accent); color: #1b1200; font-weight: 700; font-size: 14px; cursor: pointer;
+    }
+    button:hover { filter: brightness(1.07); }
+    .result {
+      margin-top: 14px; font-size: 14px; word-break: break-all; min-height: 20px;
+      background: #0e1424; border: 1px dashed var(--border); border-radius: 9px; padding: 10px 12px;
+    }
+    .result.ok { border-color: var(--ok); }
+    .result.bad { border-color: var(--bad); }
+    .kv { color: var(--muted); }
+    .kv b { color: var(--text); }
+    footer { text-align: center; color: var(--muted); font-size: 12px; padding-bottom: 30px; }
+    code { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">&#8383;</div>
+    <h1>Bitcoin- Toolkit</h1>
+    <p class="subtitle">Convert units, validate addresses, and mint fresh keys.</p>
+    {% if quote.live %}
+      <div class="price" id="price">${{ "{:,.2f}".format(quote.price) }}
+        <small>/ BTC &middot; live via {{ quote.source }}</small></div>
+    {% else %}
+      <div class="price" id="price">Price offline <small>(no network)</small></div>
+    {% endif %}
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Unit converter</h2>
+      <label for="btc">BTC &rarr; satoshis</label>
+      <input id="btc" type="text" placeholder="0.5" />
+      <button onclick="convertBtc()">Convert BTC</button>
+      <div class="result" id="btcResult"></div>
+    </section>
+
+    <section class="card">
+      <h2>Address validator</h2>
+      <label for="addr">Base58Check address</label>
+      <input id="addr" type="text" placeholder="1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2" />
+      <button onclick="validateAddr()">Validate</button>
+      <div class="result" id="addrResult"></div>
+    </section>
+
+    <section class="card">
+      <h2>Key generator</h2>
+      <p class="kv">Generate a new secp256k1 keypair and mainnet P2PKH address.</p>
+      <button onclick="keygen()">Generate keypair</button>
+      <div class="result" id="keyResult"></div>
+    </section>
+  </main>
+
+  <footer>Bitcoin- &middot; educational toolkit. Do not use generated keys to store real funds.</footer>
+
+  <script>
+    async function convertBtc() {
+      const btc = document.getElementById('btc').value.trim();
+      const out = document.getElementById('btcResult');
+      const r = await fetch('/api/convert?btc=' + encodeURIComponent(btc));
+      const j = await r.json();
+      if (r.ok) {
+        out.className = 'result ok';
+        out.innerHTML = '<span class="kv"><b>' + btc + '</b> BTC = <b>' + j.satoshis.toLocaleString() + '</b> satoshis</span>';
+      } else {
+        out.className = 'result bad';
+        out.textContent = j.error || 'error';
+      }
+    }
+
+    async function validateAddr() {
+      const addr = document.getElementById('addr').value.trim();
+      const out = document.getElementById('addrResult');
+      const r = await fetch('/api/validate?address=' + encodeURIComponent(addr));
+      const j = await r.json();
+      out.className = 'result ' + (j.valid ? 'ok' : 'bad');
+      out.innerHTML = '<span class="kv"><b>' + (j.valid ? 'VALID' : 'INVALID') + '</b> address</span>';
+    }
+
+    async function keygen() {
+      const out = document.getElementById('keyResult');
+      out.className = 'result';
+      out.textContent = 'Generating...';
+      const r = await fetch('/api/keygen', { method: 'POST' });
+      const j = await r.json();
+      out.className = 'result ok';
+      out.innerHTML =
+        '<div class="kv">address: <b>' + j.address + '</b></div>' +
+        '<div class="kv">wif: <b>' + j.wif + '</b></div>' +
+        '<div class="kv">pubkey: <b>' + j.public_key_hex + '</b></div>';
+    }
+  </script>
+</body>
+</html>
