@@ -17,6 +17,27 @@ from .core import (
     generate_keypair,
     KeyPair,
 )
+from .blockchain import (
+    sha256d,
+    target_prefix,
+    Block,
+    Blockchain,
+    MiningResult,
+    mine_block,
+)
+from .pow_bitcoin import (
+    bits_to_target,
+    target_to_bits,
+    target_to_difficulty,
+    target_from_leading_zero_bits,
+    compute_merkle_root,
+    txid_from_raw,
+    BlockHeader,
+    DIFFICULTY_1_TARGET,
+    MAX_TARGET,
+    mine as mine_header,
+    MiningResult as HeaderMiningResult,
+)
 
 __version__ = "0.1.0"
 
@@ -31,5 +52,22 @@ __all__ = [
     "is_valid_address",
     "generate_keypair",
     "KeyPair",
+    "sha256d",
+    "target_prefix",
+    "Block",
+    "Blockchain",
+    "MiningResult",
+    "mine_block",
+    "bits_to_target",
+    "target_to_bits",
+    "target_to_difficulty",
+    "target_from_leading_zero_bits",
+    "compute_merkle_root",
+    "txid_from_raw",
+    "BlockHeader",
+    "DIFFICULTY_1_TARGET",
+    "MAX_TARGET",
+    "mine_header",
+    "HeaderMiningResult",
     "__version__",
 ]
