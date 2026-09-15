@@ -11,6 +11,8 @@ the project is runnable end to end.
 - Mainnet P2PKH address validation
 - secp256k1 keypair + address generation (private key, WIF, compressed pubkey)
 - Live BTC price via the public CoinGecko API (graceful offline fallback)
+- SHA-256 proof-of-work miner + minimal blockchain (double-SHA-256, difficulty
+  target, chain validation)
 
 ## Quick start
 
@@ -28,6 +30,7 @@ python -m bitcoin_app.cli convert --sats 150000000
 python -m bitcoin_app.cli validate 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
 python -m bitcoin_app.cli keygen
 python -m bitcoin_app.cli price --currency usd
+python -m bitcoin_app.cli mine --difficulty 4 --blocks 3
 ```
 
 ### Web dashboard
