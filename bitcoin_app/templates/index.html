@@ -106,6 +106,18 @@
       <button onclick="keygen()">Generate keypair</button>
       <div class="result" id="keyResult"></div>
     </section>
+
+    <section class="card">
+      <h2>SHA-256 miner</h2>
+      <p class="kv">Proof-of-work: find a nonce whose double-SHA-256 hash starts
+        with N zeros.</p>
+      <label for="mineData">Block data</label>
+      <input id="mineData" type="text" value="hello block" />
+      <label for="difficulty">Difficulty (leading zeros, 1&ndash;6)</label>
+      <input id="difficulty" type="number" min="1" max="6" value="4" />
+      <button onclick="mine()">Mine block</button>
+      <div class="result" id="mineResult"></div>
+    </section>
   </main>
 
   <footer>Bitcoin- &middot; educational toolkit. Do not use generated keys to store real funds.</footer>
@@ -145,6 +157,32 @@
         '<div class="kv">address: <b>' + j.address + '</b></div>' +
         '<div class="kv">wif: <b>' + j.wif + '</b></div>' +
         '<div class="kv">pubkey: <b>' + j.public_key_hex + '</b></div>';
+    }
+
+    async function mine() {
+      const out = document.getElementById('mineResult');
+      const data = document.getElementById('mineData').value;
+      const difficulty = parseInt(document.getElementById('difficulty').value, 10);
+      out.className = 'result';
+      out.textContent = 'Mining (target ' + '0'.repeat(difficulty || 0) + '...)...';
+      const r = await fetch('/api/mine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: data, difficulty: difficulty }),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        out.className = 'result bad';
+        out.textContent = j.error || 'error';
+        return;
+      }
+      out.className = 'result ok';
+      out.innerHTML =
+        '<div class="kv">hash: <b>' + j.hash + '</b></div>' +
+        '<div class="kv">nonce: <b>' + j.nonce.toLocaleString() + '</b> &middot; ' +
+        'hashes: <b>' + j.hashes.toLocaleString() + '</b></div>' +
+        '<div class="kv">time: <b>' + j.elapsed_s + 's</b> &middot; ' +
+        'rate: <b>' + Math.round(j.hashrate).toLocaleString() + ' H/s</b></div>';
     }
   </script>
 </body>

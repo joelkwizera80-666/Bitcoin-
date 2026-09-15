@@ -19,6 +19,7 @@ from . import (
     satoshi_to_btc,
     generate_keypair,
     is_valid_address,
+    Blockchain,
 )
 from .prices import get_btc_price
 
@@ -51,6 +52,22 @@ def _cmd_keygen(_args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_mine(args: argparse.Namespace) -> int:
+    chain = Blockchain(difficulty=args.difficulty)
+    print(f"Mining {args.blocks} block(s) at difficulty {args.difficulty} "
+          f"(target prefix '{'0' * args.difficulty}')\n")
+    for n in range(1, args.blocks + 1):
+        result = chain.add_block(f"{args.data} #{n}")
+        rate = result.hashrate
+        print(
+            f"block {result.block.index}: hash={result.hash_hex} "
+            f"nonce={result.nonce:,} hashes={result.hashes:,} "
+            f"time={result.elapsed_s:.3f}s rate={rate:,.0f} H/s"
+        )
+    print(f"\nchain valid: {chain.is_valid()}  length: {len(chain.blocks)} blocks")
+    return 0
+
+
 def _cmd_price(args: argparse.Namespace) -> int:
     quote = get_btc_price(args.currency)
     if quote.live:
@@ -75,6 +92,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_key = sub.add_parser("keygen", help="generate a new keypair + address")
     p_key.set_defaults(func=_cmd_keygen)
+
+    p_mine = sub.add_parser("mine", help="mine blocks with SHA-256 proof-of-work")
+    p_mine.add_argument("--difficulty", type=int, default=4,
+                        help="required leading zero hex digits (default 4)")
+    p_mine.add_argument("--blocks", type=int, default=1, help="number of blocks to mine")
+    p_mine.add_argument("--data", default="block", help="payload label for each block")
+    p_mine.set_defaults(func=_cmd_mine)
 
     p_price = sub.add_parser("price", help="fetch the live BTC price")
     p_price.add_argument("--currency", default="usd")

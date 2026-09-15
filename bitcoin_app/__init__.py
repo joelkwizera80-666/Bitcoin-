@@ -17,6 +17,14 @@ from .core import (
     generate_keypair,
     KeyPair,
 )
+from .blockchain import (
+    sha256d,
+    target_prefix,
+    Block,
+    Blockchain,
+    MiningResult,
+    mine_block,
+)
 
 __version__ = "0.1.0"
 
@@ -31,5 +39,11 @@ __all__ = [
     "is_valid_address",
     "generate_keypair",
     "KeyPair",
+    "sha256d",
+    "target_prefix",
+    "Block",
+    "Blockchain",
+    "MiningResult",
+    "mine_block",
     "__version__",
 ]
