@@ -1,17 +1,8 @@
-"""Small Flask dashboard for the Bitcoin toolkit.
-
-Run locally with::
-
-    flask --app bitcoin_app.app run --host 0.0.0.0 --port 5000
-
-or::
-
-    python -m bitcoin_app.app
-"""
+"""Flask dashboard + 666 Intelligence API."""
 
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation
+from decimal import InvalidOperation
 
 from flask import Flask, jsonify, render_template, request
 
@@ -21,6 +12,7 @@ from . import (
     generate_keypair,
     is_valid_address,
 )
+from .intelligence import chart_fees, plot_route, recon_address
 from .prices import get_btc_price
 
 
@@ -30,11 +22,12 @@ def create_app() -> Flask:
     @app.route("/")
     def index():
         quote = get_btc_price("usd")
-        return render_template("index.html", quote=quote)
+        fees = chart_fees()
+        return render_template("index.html", quote=quote, fees=fees)
 
     @app.get("/healthz")
     def healthz():
-        return jsonify(status="ok")
+        return jsonify(status="ok", unit="CAPTAINCOOKCRYPTO", product="ROBIN BANKS")
 
     @app.get("/api/price")
     def api_price():
@@ -76,6 +69,32 @@ def create_app() -> Flask:
             public_key_hex=kp.public_key_hex,
             address=kp.address,
         )
+
+    @app.get("/api/intel/fees")
+    def api_fees():
+        return jsonify(chart_fees().as_dict())
+
+    @app.get("/api/intel/recon")
+    def api_recon():
+        address = request.args.get("address", "")
+        if not address:
+            return jsonify(error="address required"), 400
+        return jsonify(recon_address(address).as_dict())
+
+    @app.get("/api/intel/route")
+    def api_route():
+        destination = request.args.get("destination", "")
+        try:
+            sats = int(request.args.get("sats", "0"))
+            vbytes = int(request.args.get("vbytes", "140"))
+        except ValueError:
+            return jsonify(error="sats and vbytes must be integers"), 400
+        if not destination:
+            return jsonify(error="destination required"), 400
+        try:
+            return jsonify(plot_route(destination, sats, vbytes))
+        except ValueError as exc:
+            return jsonify(error=str(exc)), 400
 
     return app
 

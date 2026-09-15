@@ -1,9 +1,4 @@
-"""Bitcoin- : a small, dependency-light Bitcoin toolkit.
-
-Provides unit conversions, Base58Check encoding, P2PKH address validation and
-generation, and a live price helper. Exposed through a CLI and a small Flask
-web dashboard.
-"""
+"""Bitcoin- : toolkit + 666 Intelligence recon for ROBIN BANKS."""
 
 from .core import (
     SATOSHIS_PER_BTC,
@@ -17,8 +12,9 @@ from .core import (
     generate_keypair,
     KeyPair,
 )
+from .intelligence import chart_fees, recon_address, plot_route, VaultDossier, FeeChart
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "SATOSHIS_PER_BTC",
@@ -31,5 +27,10 @@ __all__ = [
     "is_valid_address",
     "generate_keypair",
     "KeyPair",
+    "chart_fees",
+    "recon_address",
+    "plot_route",
+    "VaultDossier",
+    "FeeChart",
     "__version__",
 ]

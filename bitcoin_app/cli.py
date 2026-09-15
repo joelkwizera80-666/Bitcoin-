@@ -1,17 +1,9 @@
-"""Command-line interface for the Bitcoin toolkit.
-
-Examples::
-
-    python -m bitcoin_app.cli convert --btc 0.5
-    python -m bitcoin_app.cli convert --sats 150000000
-    python -m bitcoin_app.cli validate 1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2
-    python -m bitcoin_app.cli keygen
-    python -m bitcoin_app.cli price --currency usd
-"""
+"""CLI — toolkit + 666 Intelligence."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 
 from . import (
@@ -20,6 +12,7 @@ from . import (
     generate_keypair,
     is_valid_address,
 )
+from .intelligence import chart_fees, plot_route, recon_address
 from .prices import get_btc_price
 
 
@@ -60,13 +53,44 @@ def _cmd_price(args: argparse.Namespace) -> int:
     return 1
 
 
+def _cmd_fees(_args: argparse.Namespace) -> int:
+    fees = chart_fees()
+    tag = "live" if fees.live else "offline"
+    print(f"fee chart ({fees.source}, {tag}) sats/vB")
+    print(f"  fastest    {fees.fastest}")
+    print(f"  half-hour  {fees.half_hour}")
+    print(f"  hour       {fees.hour}")
+    print(f"  economy    {fees.economy}")
+    print(f"  minimum    {fees.minimum}")
+    return 0
+
+
+def _cmd_recon(args: argparse.Namespace) -> int:
+    d = recon_address(args.address)
+    print(json.dumps(d.as_dict(), indent=2))
+    return 0 if d.valid else 1
+
+
+def _cmd_route(args: argparse.Namespace) -> int:
+    try:
+        route = plot_route(args.destination, args.sats, args.vbytes)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(route, indent=2))
+    return 0 if route["clearance"] == "GO" else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="bitcoin-app", description="Bitcoin toolkit")
+    parser = argparse.ArgumentParser(
+        prog="bitcoin-app",
+        description="Bitcoin toolkit + 666 Intelligence (ROBIN BANKS / CAPTAINCOOKCRYPTO)",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_conv = sub.add_parser("convert", help="convert between BTC and satoshis")
-    p_conv.add_argument("--btc", type=str, default=None, help="amount in BTC")
-    p_conv.add_argument("--sats", type=int, default=None, help="amount in satoshis")
+    p_conv.add_argument("--btc", type=str, default=None)
+    p_conv.add_argument("--sats", type=int, default=None)
     p_conv.set_defaults(func=_cmd_convert)
 
     p_val = sub.add_parser("validate", help="validate a Base58Check address")
@@ -79,6 +103,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_price = sub.add_parser("price", help="fetch the live BTC price")
     p_price.add_argument("--currency", default="usd")
     p_price.set_defaults(func=_cmd_price)
+
+    p_fees = sub.add_parser("fees", help="666 Intel fee chart")
+    p_fees.set_defaults(func=_cmd_fees)
+
+    p_recon = sub.add_parser("recon", help="watch-only address dossier")
+    p_recon.add_argument("address")
+    p_recon.set_defaults(func=_cmd_recon)
+
+    p_route = sub.add_parser("route", help="Captain Cook haul quote")
+    p_route.add_argument("destination")
+    p_route.add_argument("--sats", type=int, required=True)
+    p_route.add_argument("--vbytes", type=int, default=140)
+    p_route.set_defaults(func=_cmd_route)
 
     return parser
 
